@@ -8,8 +8,8 @@ Multi-agent A2A platform with 3 agents and 3 MCP tool servers:
 | Orchestrator Agent | 8001 | LangGraph ReAct agent, delegates to specialists |
 | Researcher Agent | 8002 | LangGraph ReAct agent, uses Custom MCP + Vector MCP |
 | Analyst Agent | 8003 | LangGraph ReAct agent, uses Toolbox MCP |
-| Custom MCP | 8004 | Wikipedia + arXiv + HuggingFace tools |
-| Toolbox MCP | 8005 | arXiv + OpenAlex analytics |
+| Custom MCP | 8004 | Wikipedia + HuggingFace tools + SQLite knowledge base |
+| Toolbox MCP | 8005 | **MCP Toolbox binary** — native HTTP tools: arXiv + OpenAlex |
 | Vector MCP | 8006 | HuggingFace embeddings + ChromaDB semantic search |
 
 ## Commands
@@ -50,10 +50,19 @@ python demo_client.py
 - A multi-step agent call (3-5 LLM rounds) takes 2.5–10 minutes
 - Client timeouts set to 600s (agents) and 900s (orchestrator)
 
-### arXiv rate limiting
-- arXiv API enforces rate limits on burst requests (returns HTTP 429)
-- The analytics tools retry up to 3 times with 10/20/30s back-off
-- If rate-limited, the agent will return a graceful error message
+### Toolbox MCP — MCP Toolbox binary (genai-toolbox)
+- Toolbox MCP is the real `genai-toolbox` binary from `googleapis/mcp-toolbox`
+- Binary location: `../../images/mlp/bin/toolbox` (or set `TOOLBOX_BIN` in `.env`)
+- Config: `toolbox_mcp/tools.yaml` — multi-document YAML with HTTP sources + tools
+- Sources: `arxiv` (`https://export.arxiv.org/api`) and `openalex` (`https://api.openalex.org`)
+- Tools: `search_papers`, `get_trending_ai_papers`, `search_openalex`
+- No Python/FastMCP — the binary handles HTTP calls natively
+- Docs: https://mcp-toolbox.dev/integrations/http/tools/http-tool/
+
+### arXiv responses (Atom XML)
+- arXiv returns Atom XML feed; the toolbox binary passes the raw response to the LLM
+- The LLM (llama3.2:1b) is expected to parse the XML — works in practice
+- arXiv enforces rate limits (HTTP 429); the binary does not auto-retry, so space out calls
 
 ### Wikipedia API (v2 search)
 - Wikipedia retired the `GET /api/rest_v1/page/search` endpoint (returns 404)

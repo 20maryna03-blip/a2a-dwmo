@@ -83,9 +83,10 @@ class ResearchAgent:
     Tool groups available to the agent:
       - Custom MCP: save_finding, search_knowledge_base, list_topics,
         get_findings_by_topic, generate_summary_report, count_findings,
-        search_wikipedia, get_wikipedia_summary, fetch_arxiv_papers,
-        get_arxiv_paper_details, analyze_image (BLIP multimodal),
-        summarize_text (BART), classify_text (zero-shot), generate_text_with_hf
+        search_wikipedia, get_wikipedia_summary,
+        analyze_image (BLIP multimodal), summarize_text (BART),
+        classify_text (zero-shot), generate_text_with_hf
+        (arXiv tools moved to Toolbox MCP: search_papers, get_trending_ai_papers)
       - Vector MCP: semantic_search, get_vector_db_stats, add_text_to_vector_db,
         populate_from_arxiv, populate_from_wikipedia
     """

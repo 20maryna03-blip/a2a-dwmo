@@ -7,9 +7,11 @@ FastMCP server that exposes three groups of tools to research agents:
       save_finding, search_knowledge_base, list_topics,
       get_findings_by_topic, generate_summary_report, count_findings
 
- 2. Web Knowledge tools (public APIs — no key required):
-      search_wikipedia, get_wikipedia_summary,
-      fetch_arxiv_papers, get_arxiv_paper_details
+ 2. Web Knowledge tools (Wikipedia — no key required):
+      search_wikipedia, get_wikipedia_summary
+
+    NOTE: arXiv tools are in Toolbox MCP (toolbox_mcp/tools.yaml),
+    served by the real MCP Toolbox binary as native HTTP tools.
 
  3. HuggingFace tools (Inference API — HF_API_KEY required):
       analyze_image  (BLIP — multimodal image captioning)
@@ -48,8 +50,6 @@ from tools.knowledge_tools import (  # noqa: E402
 )
 from tools.report_tools import count_findings, generate_summary_report  # noqa: E402
 from tools.web_knowledge_tools import (  # noqa: E402
-    fetch_arxiv_papers,
-    get_arxiv_paper_details,
     get_wikipedia_summary,
     search_wikipedia,
 )
@@ -78,11 +78,11 @@ logger = logging.getLogger(__name__)
 mcp = FastMCP(
     name="knowledge-management-mcp",
     instructions=(
-        "Comprehensive knowledge management server with three capability groups:\n"
+        "Knowledge management server with three capability groups:\n"
         "1. LOCAL KNOWLEDGE BASE — save_finding, search_knowledge_base, list_topics, "
         "   get_findings_by_topic, generate_summary_report, count_findings\n"
-        "2. WEB KNOWLEDGE (free APIs) — search_wikipedia, get_wikipedia_summary, "
-        "   fetch_arxiv_papers, get_arxiv_paper_details\n"
+        "2. WIKIPEDIA (free API) — search_wikipedia, get_wikipedia_summary\n"
+        "   (arXiv tools live in Toolbox MCP — search_papers, get_trending_ai_papers, search_openalex)\n"
         "3. HUGGINGFACE AI (requires HF_API_KEY) — analyze_image (BLIP multimodal), "
         "   summarize_text (BART), classify_text (zero-shot), generate_text_with_hf (Mistral-7B)\n\n"
         "Workflow: Use web/HF tools to gather information, then save_finding to persist it."
@@ -97,11 +97,9 @@ mcp.tool()(get_findings_by_topic)
 mcp.tool()(generate_summary_report)
 mcp.tool()(count_findings)
 
-# Group 2 — Web knowledge (public APIs)
+# Group 2 — Wikipedia (arXiv is in Toolbox MCP)
 mcp.tool()(search_wikipedia)
 mcp.tool()(get_wikipedia_summary)
-mcp.tool()(fetch_arxiv_papers)
-mcp.tool()(get_arxiv_paper_details)
 
 # Group 3 — HuggingFace AI tools (multimodal + NLP)
 mcp.tool()(analyze_image)

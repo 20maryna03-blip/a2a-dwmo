@@ -148,18 +148,32 @@ async def test_wikipedia_search() -> None:
 
 
 async def test_arxiv_search() -> None:
-    """Toolbox MCP — arXiv search via analytics tool."""
-    print("\n── MCP tool: arXiv search ─────────────────────────────────")
+    """Toolbox MCP — search_papers via live MCP Toolbox binary HTTP endpoint."""
+    print("\n── MCP tool: arXiv search (Toolbox binary) ────────────────")
     t0 = time.time()
     try:
-        at = _load_module("toolbox_mcp/tools/analytics_tools.py")
-        raw = await at.get_recent_findings(limit=3, topic="large language models")
-        d = json.loads(raw)
-        assert "papers" in d, f"unexpected response: {raw[:100]}"
-        _log("get_recent_findings (arXiv)", PASS, time.time() - t0,
-             f"count={d['count']}  first={d['papers'][0]['title'][:60]!r}" if d["papers"] else "count=0")
+        payload = {
+            "jsonrpc": "2.0", "id": "t-arxiv", "method": "tools/call",
+            "params": {"name": "search_papers",
+                       "arguments": {"search_query": "all:large language models", "max_results": 3}},
+        }
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            resp = await client.post(
+                "http://localhost:8005/mcp",
+                json=payload,
+                headers={"Content-Type": "application/json",
+                         "Accept": "application/json, text/event-stream"},
+            )
+        resp.raise_for_status()
+        body = resp.text
+        data_line = next((l[5:] for l in body.splitlines() if l.startswith("data:")), body)
+        result = json.loads(data_line)
+        content = result.get("result", {}).get("content", [{}])[0].get("text", "")
+        assert "entry" in content or "xml" in content.lower(), f"unexpected: {content[:100]}"
+        _log("search_papers (arXiv via Toolbox)", PASS, time.time() - t0,
+             f"got {len(content)} chars of Atom XML")
     except Exception as e:
-        _log("get_recent_findings (arXiv)", FAIL, time.time() - t0, str(e))
+        _log("search_papers (arXiv via Toolbox)", FAIL, time.time() - t0, str(e))
 
 
 async def test_vector_search() -> None:

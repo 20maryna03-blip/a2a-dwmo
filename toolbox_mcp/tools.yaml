@@ -1,92 +1,94 @@
 # =============================================================================
-# MCP Toolbox for Databases — AI Research Platform
-# https://googleapis.github.io/mcp-toolbox/
+# MCP Toolbox for Databases — HTTP Sources
+# https://mcp-toolbox.dev/integrations/http/tools/http-tool/
 #
-# Placeholders (${VAR} or ${VAR:-default}) are resolved by resolve_config.py
-# from environment variables / runtime parameters before the binary starts.
+# Multi-document YAML: each section separated by ---
+# Toolbox binary composes URL as: source.baseUrl + tool.path + queryParams
 #
-# Local dev:  python start.py               → Python FastMCP fallback (SQLite)
-# Production: python start.py --use-toolbox → MCPToolbox binary (PostgreSQL)
+# Start:  bin/toolbox serve --config toolbox_mcp/tools.yaml --address 0.0.0.0 --port 8005
 # =============================================================================
 
-sources:
-  research-db:
-    kind: postgres
-    host:     ${DATABASE_HOST:-localhost}
-    port:     ${DATABASE_PORT:-5432}
-    database: ${DATABASE_NAME:-research_db}
-    user:     ${DATABASE_USER:-postgres}
-    password: ${DATABASE_PASSWORD}
+---
+kind: source
+name: arxiv
+type: http
+baseUrl: "https://export.arxiv.org"
+timeout: "30s"
+headers:
+  User-Agent: "ai-platform-demo/1.0 (toolbox-mcp)"
 
-tools:
-  get_topic_statistics:
-    kind: postgres-sql
-    source: research-db
-    description: >
-      Get an overview of all research topics: finding count and latest activity
-      date per topic, ordered by most findings first. Use this to understand
-      the breadth and depth of the knowledge base.
-    statement: |
-      SELECT
-        topic,
-        COUNT(*)            AS finding_count,
-        MAX(created_at)     AS latest_finding,
-        MIN(created_at)     AS earliest_finding
-      FROM findings
-      GROUP BY topic
-      ORDER BY finding_count DESC;
+---
+kind: source
+name: openalex
+type: http
+baseUrl: "https://api.openalex.org"
+timeout: "30s"
+headers:
+  User-Agent: "ai-platform-demo/1.0 (toolbox-mcp)"
 
-  get_recent_findings:
-    kind: postgres-sql
-    source: research-db
-    description: >
-      Return the most recent research findings across all topics.
-      Useful for understanding the latest research activity.
-    parameters:
-      - name: limit
-        type: integer
-        description: Number of findings to return (default 10, max 50)
-        default: 10
-    statement: |
-      SELECT id, topic, content, source, created_at
-      FROM findings
-      ORDER BY created_at DESC
-      LIMIT {{ limit }};
+---
+kind: tool
+name: search_papers
+type: http
+source: arxiv
+method: GET
+path: /api/query
+description: >
+  Search arXiv for academic papers by keyword.
+  Returns Atom XML with paper titles, authors, abstracts, publication dates and arXiv IDs.
+  Use this to find research papers on any AI, ML or science topic.
+queryParams:
+  - name: search_query
+    type: string
+    description: "Search keywords, e.g. 'all:transformer attention' or 'ti:LLM agents'"
+    required: true
+  - name: max_results
+    type: integer
+    description: "Maximum number of papers to return (default 5, max 20)"
+    default: 5
+    required: false
+  - name: sortBy
+    type: string
+    description: "Sort order: 'submittedDate' for newest first, or 'relevance'"
+    default: "submittedDate"
+    required: false
 
-  search_findings_by_keyword:
-    kind: postgres-sql
-    source: research-db
-    description: >
-      Full-text keyword search across finding content and topic names.
-      Returns findings that contain the keyword (case-insensitive).
-    parameters:
-      - name: keyword
-        type: string
-        description: Search keyword or phrase to look for in findings
-    statement: |
-      SELECT id, topic, content, source, created_at
-      FROM findings
-      WHERE content ILIKE '%{{ keyword }}%'
-         OR topic   ILIKE '%{{ keyword }}%'
-      ORDER BY created_at DESC
-      LIMIT 20;
+---
+kind: tool
+name: get_trending_ai_papers
+type: http
+source: arxiv
+method: GET
+path: "/api/query?search_query=cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL+OR+cat:cs.CV&sortBy=submittedDate"
+description: >
+  Get the most recently submitted AI and ML papers from arXiv across the key
+  categories: cs.AI (AI), cs.LG (machine learning), cs.CL (NLP/LLMs), cs.CV (vision).
+  Use this to identify trending research topics and active areas in AI research.
+queryParams:
+  - name: max_results
+    type: integer
+    description: "Number of recent papers to fetch (default 20, max 40)"
+    default: 20
+    required: false
 
-  get_trending_topics:
-    kind: postgres-sql
-    source: research-db
-    description: >
-      Identify research topics with the most activity in the last N days.
-      Use this to spot emerging research trends and hot areas.
-    parameters:
-      - name: days
-        type: integer
-        description: Look-back window in days (default 7)
-        default: 7
-    statement: |
-      SELECT
-        topic,
-        COUNT(*) AS recent_finding_count
-      FROM findings
-      WHERE created_at >= NOW() - INTERVAL '{{ days }} days'
-      GROUP BY topic
-      ORDER BY recent_finding_count DESC;
+---
+kind: tool
+name: search_openalex
+type: http
+source: openalex
+method: GET
+path: /works
+description: >
+  Search the OpenAlex open scholarly graph for academic works.
+  Returns JSON with titles, citation counts, open-access status, publication years
+  and primary topic classification. Use for bibliometric analysis and citation data.
+queryParams:
+  - name: search
+    type: string
+    description: "Search keyword or phrase"
+    required: true
+  - name: per_page
+    type: integer
+    description: "Number of results to return (default 8, max 25)"
+    default: 8
+    required: false
