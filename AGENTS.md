@@ -30,16 +30,22 @@ python demo_client.py
 
 ## LLM Backend
 
-**Ollama (default, recommended)**
-- `USE_OLLAMA=true` in `.env`
-- `OLLAMA_MODEL=llama3.2:1b` (fast on CPU, ~50s/call)
-- `OLLAMA_MODEL=qwen2.5:3b` (higher quality, ~120s/call on CPU)
-- Ollama must be running: `ollama serve`
-- Pull model: `ollama pull llama3.2:1b`
-- Both models support full tool/function calling required by LangGraph ReAct agents.
+**HuggingFace Inference API (recommended)**
+- `USE_HF_LLM=true` + `HF_API_KEY=hf_...` in `.env`
+- `HF_MODEL=meta-llama/Llama-3.1-8B-Instruct` (free tier, tool calling supported)
+- `HF_MODEL=meta-llama/Llama-3.3-70B-Instruct` (HF Pro — better quality)
+- Uses HF's OpenAI-compatible endpoint (`https://api-inference.huggingface.co/v1/`)
+- All three agents use `ChatOpenAI` pointed at HF — full `.bind_tools()` support
+- Get a free token: https://huggingface.co/settings/tokens
 
-**OpenAI (optional)**
-- Set `USE_OLLAMA=false` and `OPENAI_API_KEY=sk-...` in `.env`
+**Ollama (local, no API key)**
+- `USE_HF_LLM=false` + `USE_OLLAMA=true` in `.env`
+- `OLLAMA_MODEL=llama3.2:1b` (~50s/call on CPU); `qwen2.5:3b` for higher quality
+- Requires Ollama running: `OLLAMA_MODELS=~/.ollama/models ollama serve`
+- Slow on CPU without GPU — use HF backend instead when possible
+
+**OpenAI (fallback)**
+- `USE_HF_LLM=false` + `USE_OLLAMA=false` + `OPENAI_API_KEY=sk-...` in `.env`
 - Note: blocked on some corporate networks (Dell/Zscaler proxy)
 
 ## Known Issues / Quirks

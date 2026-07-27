@@ -12,17 +12,22 @@ _ENV_FILE = Path(__file__).parent.parent.parent / ".env"
 class Config(BaseSettings):
     model_config = {"env_file": str(_ENV_FILE), "env_file_encoding": "utf-8", "extra": "ignore"}
 
-    # LLM — OpenAI (primary)
+    # LLM — HuggingFace Inference API (recommended, OpenAI-compatible endpoint)
+    USE_HF_LLM: bool = Field(default=False, description="Use HuggingFace Inference API as LLM backend")
+    HF_API_KEY: str = Field(default="", description="HuggingFace Hub token (hf_...)")
+    HF_MODEL: str = Field(
+        default="meta-llama/Llama-3.1-8B-Instruct",
+        description="HuggingFace model ID — must support tool calling",
+    )
+    HF_BASE_URL: str = Field(
+        default="https://api-inference.huggingface.co/v1/",
+        description="HuggingFace OpenAI-compatible inference endpoint",
+    )
+
+    # LLM — OpenAI (fallback)
     OPENAI_API_KEY: str = Field(default="", description="OpenAI API key")
     OPENAI_MODEL: str = Field(default="gpt-4o-mini", description="OpenAI model name")
     OPENAI_TEMPERATURE: float = Field(default=0.2, description="LLM temperature")
-
-    # LLM — HuggingFace (alternative open-source LLM)
-    HF_API_KEY: str = Field(default="", description="HuggingFace Hub token")
-    HF_MODEL: str = Field(
-        default="mistralai/Mistral-7B-Instruct-v0.1",
-        description="HuggingFace model for text generation (Inference API)",
-    )
 
     # LLM — Ollama (local, no API key needed)
     USE_OLLAMA: bool = Field(default=False, description="Use local Ollama instead of OpenAI")

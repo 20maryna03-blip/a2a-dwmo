@@ -108,35 +108,52 @@ pip install -e .
 
 ### 2. Choose your LLM backend
 
-**Option A — Ollama (recommended, runs fully offline, no API key)**
+**Option A — HuggingFace Inference API (recommended)**
+
+No local hardware needed. Uses HF's OpenAI-compatible endpoint for tool-calling LLMs.
+
+```bash
+cp .env.template .env
+# Set in .env:
+#   USE_HF_LLM=true
+#   HF_API_KEY=hf_...        (get free token at huggingface.co/settings/tokens)
+#   HF_MODEL=meta-llama/Llama-3.1-8B-Instruct   # free tier
+#   # HF_MODEL=meta-llama/Llama-3.3-70B-Instruct  # HF Pro — better quality
+```
+
+> **Free vs Pro:** `Llama-3.1-8B-Instruct` is available on the free tier and
+> supports tool calling. For more complex tasks, upgrade to HF Pro and use
+> `Llama-3.3-70B-Instruct` or `Qwen/Qwen2.5-72B-Instruct`.
+
+**Option B — Ollama (fully offline, no API key)**
 
 ```bash
 # Install Ollama (Linux/WSL2)
 curl -fsSL https://ollama.com/install.sh | sh
-# Pull a small model with tool-calling support (~1.3 GB)
 ollama pull llama3.2:1b
 ```
 
 Then in `.env`:
 ```
+USE_HF_LLM=false
 USE_OLLAMA=true
 OLLAMA_MODEL=llama3.2:1b
 ```
 
-> **CPU performance note:** `llama3.2:1b` generates ~0.6 words/s on CPU.
-> Expect 2–5 min per agent call. For faster results pull `qwen2.5:3b` and set
-> `OLLAMA_MODEL=qwen2.5:3b` (higher quality, ~2 min/call on a modern laptop).
-> Ollama auto-detects GPU if available and runs at full speed.
+> **CPU performance note:** `llama3.2:1b` is slow on CPU (~50s/call). Use the
+> HF backend instead unless you need fully offline operation.
 
-**Option B — OpenAI**
+**Option C — OpenAI**
 
 ```bash
 cp .env.template .env
 # Set:
+#   USE_HF_LLM=false
 #   USE_OLLAMA=false
 #   OPENAI_API_KEY=sk-...
-#   HF_API_KEY=hf-...    (optional — enables HuggingFace multimodal tools)
 ```
+
+> Note: OpenAI may be blocked on some corporate networks.
 
 ### 3. Start all components
 

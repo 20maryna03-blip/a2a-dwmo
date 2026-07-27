@@ -38,6 +38,39 @@ _config = Config()
 _prompt_loader = PromptLoader()
 
 
+def _build_llm():
+    """Return the active LLM backend: HuggingFace > Ollama > OpenAI."""
+    # 1. HuggingFace Inference API (OpenAI-compatible endpoint)
+    if _config.USE_HF_LLM and _config.HF_API_KEY and not _config.HF_API_KEY.startswith("hf_your"):
+        logger.info("Using HuggingFace LLM backend: %s", _config.HF_MODEL)
+        return ChatOpenAI(
+            model=_config.HF_MODEL,
+            base_url=_config.HF_BASE_URL,
+            api_key=_config.HF_API_KEY,
+            temperature=_config.OPENAI_TEMPERATURE,
+            max_tokens=1024,
+        )
+
+    # 2. Ollama (local — no API key needed)
+    if _config.USE_OLLAMA:
+        from langchain_ollama import ChatOllama
+        ollama_host = _config.OLLAMA_BASE_URL.rstrip("/").removesuffix("/v1")
+        logger.info("Using Ollama LLM backend: %s @ %s", _config.OLLAMA_MODEL, ollama_host)
+        return ChatOllama(
+            model=_config.OLLAMA_MODEL,
+            base_url=ollama_host,
+            temperature=_config.OPENAI_TEMPERATURE,
+        )
+
+    # 3. OpenAI fallback
+    logger.info("Using OpenAI LLM backend: %s", _config.OPENAI_MODEL)
+    return ChatOpenAI(
+        model=_config.OPENAI_MODEL,
+        api_key=_config.OPENAI_API_KEY,
+        temperature=_config.OPENAI_TEMPERATURE,
+    )
+
+
 # ---------------------------------------------------------------------------
 # A2A client helper — calls another agent via JSON-RPC 2.0
 # ---------------------------------------------------------------------------
@@ -111,22 +144,7 @@ class OrchestratorAgent:
 
     def __init__(self, context_id: str) -> None:
         self._context_id = context_id
-        if _config.USE_OLLAMA:
-            from langchain_ollama import ChatOllama
-            ollama_host = _config.OLLAMA_BASE_URL.rstrip("/").removesuffix("/v1")
-            logger.info("Using Ollama LLM backend: %s @ %s", _config.OLLAMA_MODEL, ollama_host)
-            self._llm = ChatOllama(
-                model=_config.OLLAMA_MODEL,
-                base_url=ollama_host,
-                temperature=_config.OPENAI_TEMPERATURE,
-            )
-        else:
-            logger.info("Using OpenAI LLM backend: %s", _config.OPENAI_MODEL)
-            self._llm = ChatOpenAI(
-                model=_config.OPENAI_MODEL,
-                api_key=_config.OPENAI_API_KEY,
-                temperature=_config.OPENAI_TEMPERATURE,
-            )
+        self._llm = _build_llm()
         self._system_prompt = _prompt_loader.load("orchestrator_system")
 
     def _build_tools(self) -> list:

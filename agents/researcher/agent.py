@@ -37,13 +37,30 @@ _prompt_loader = PromptLoader()
 
 
 def _build_llm():
-    """Return the active LLM backend: Ollama > HuggingFace > OpenAI."""
+    """Return the active LLM backend: HuggingFace > Ollama > OpenAI.
+
+    Priority:
+      1. HuggingFace Inference API  (USE_HF_LLM=true + HF_API_KEY)
+         Uses HF's OpenAI-compatible endpoint — full tool-calling support.
+      2. Ollama local               (USE_OLLAMA=true)
+      3. OpenAI                     (fallback / OPENAI_API_KEY)
+    """
     from langchain_openai import ChatOpenAI
 
-    # 1. Ollama (local — preferred when USE_OLLAMA=true)
+    # 1. HuggingFace Inference API (OpenAI-compatible endpoint)
+    if _config.USE_HF_LLM and _config.HF_API_KEY and not _config.HF_API_KEY.startswith("hf_your"):
+        logger.info("Using HuggingFace LLM backend: %s", _config.HF_MODEL)
+        return ChatOpenAI(
+            model=_config.HF_MODEL,
+            base_url=_config.HF_BASE_URL,
+            api_key=_config.HF_API_KEY,
+            temperature=_config.OPENAI_TEMPERATURE,
+            max_tokens=1024,
+        )
+
+    # 2. Ollama (local — no API key needed)
     if _config.USE_OLLAMA:
         from langchain_ollama import ChatOllama
-        # OLLAMA_BASE_URL is "http://localhost:11434/v1" — strip the /v1 suffix for ChatOllama
         ollama_host = _config.OLLAMA_BASE_URL.rstrip("/").removesuffix("/v1")
         logger.info("Using Ollama LLM backend: %s @ %s", _config.OLLAMA_MODEL, ollama_host)
         return ChatOllama(
@@ -52,23 +69,7 @@ def _build_llm():
             temperature=_config.OPENAI_TEMPERATURE,
         )
 
-    # 2. HuggingFace Inference API
-    use_hf = os.environ.get("USE_HF_LLM", "false").lower() == "true"
-    if use_hf and _config.HF_API_KEY and not _config.HF_API_KEY.startswith("hf-your"):
-        try:
-            from langchain_huggingface import HuggingFaceEndpoint
-            logger.info("Using HuggingFace LLM backend: %s", _config.HF_MODEL)
-            return HuggingFaceEndpoint(
-                repo_id=_config.HF_MODEL,
-                huggingfacehub_api_token=_config.HF_API_KEY,
-                temperature=_config.OPENAI_TEMPERATURE,
-                max_new_tokens=1024,
-                task="text-generation",
-            )
-        except Exception as exc:
-            logger.warning("HuggingFace LLM init failed (%s), falling back to OpenAI.", exc)
-
-    # 3. OpenAI
+    # 3. OpenAI fallback
     logger.info("Using OpenAI LLM backend: %s", _config.OPENAI_MODEL)
     return ChatOpenAI(
         model=_config.OPENAI_MODEL,
