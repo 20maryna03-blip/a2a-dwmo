@@ -1,0 +1,92 @@
+# =============================================================================
+# MCP Toolbox for Databases — AI Research Platform
+# https://googleapis.github.io/mcp-toolbox/
+#
+# Placeholders (${VAR} or ${VAR:-default}) are resolved by resolve_config.py
+# from environment variables / runtime parameters before the binary starts.
+#
+# Local dev:  python start.py               → Python FastMCP fallback (SQLite)
+# Production: python start.py --use-toolbox → MCPToolbox binary (PostgreSQL)
+# =============================================================================
+
+sources:
+  research-db:
+    kind: postgres
+    host:     ${DATABASE_HOST:-localhost}
+    port:     ${DATABASE_PORT:-5432}
+    database: ${DATABASE_NAME:-research_db}
+    user:     ${DATABASE_USER:-postgres}
+    password: ${DATABASE_PASSWORD}
+
+tools:
+  get_topic_statistics:
+    kind: postgres-sql
+    source: research-db
+    description: >
+      Get an overview of all research topics: finding count and latest activity
+      date per topic, ordered by most findings first. Use this to understand
+      the breadth and depth of the knowledge base.
+    statement: |
+      SELECT
+        topic,
+        COUNT(*)            AS finding_count,
+        MAX(created_at)     AS latest_finding,
+        MIN(created_at)     AS earliest_finding
+      FROM findings
+      GROUP BY topic
+      ORDER BY finding_count DESC;
+
+  get_recent_findings:
+    kind: postgres-sql
+    source: research-db
+    description: >
+      Return the most recent research findings across all topics.
+      Useful for understanding the latest research activity.
+    parameters:
+      - name: limit
+        type: integer
+        description: Number of findings to return (default 10, max 50)
+        default: 10
+    statement: |
+      SELECT id, topic, content, source, created_at
+      FROM findings
+      ORDER BY created_at DESC
+      LIMIT {{ limit }};
+
+  search_findings_by_keyword:
+    kind: postgres-sql
+    source: research-db
+    description: >
+      Full-text keyword search across finding content and topic names.
+      Returns findings that contain the keyword (case-insensitive).
+    parameters:
+      - name: keyword
+        type: string
+        description: Search keyword or phrase to look for in findings
+    statement: |
+      SELECT id, topic, content, source, created_at
+      FROM findings
+      WHERE content ILIKE '%{{ keyword }}%'
+         OR topic   ILIKE '%{{ keyword }}%'
+      ORDER BY created_at DESC
+      LIMIT 20;
+
+  get_trending_topics:
+    kind: postgres-sql
+    source: research-db
+    description: >
+      Identify research topics with the most activity in the last N days.
+      Use this to spot emerging research trends and hot areas.
+    parameters:
+      - name: days
+        type: integer
+        description: Look-back window in days (default 7)
+        default: 7
+    statement: |
+      SELECT
+        topic,
+        COUNT(*) AS recent_finding_count
+      FROM findings
+      WHERE created_at >= NOW() - INTERVAL '{{ days }} days'
+      GROUP BY topic
+      ORDER BY recent_finding_count DESC;

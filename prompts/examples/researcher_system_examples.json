@@ -1,0 +1,12 @@
+[
+  {
+    "task": "Research the impact of large language models on software development productivity",
+    "approach": "1. Checked existing knowledge — found 0 results on 'LLM software development'\n2. Gaps: productivity metrics, code generation quality, tooling landscape, adoption challenges\n3. Generated 4 focused findings covering each sub-topic\n4. Each finding tagged: ['LLM', 'software-development', 'productivity']",
+    "result": "RESEARCH COMPLETE\nTopics covered: LLM software development, code generation, developer tools, adoption\nFindings saved: 4\nKey insights:\n• LLMs increase developer productivity 30–55% for routine tasks (testing, docs, boilerplate)\n• Code review and architecture decisions remain human-dominant; LLMs assist, not replace\n• GitHub Copilot, Cursor, Devin represent the leading tooling wave with 40%+ enterprise adoption"
+  },
+  {
+    "task": "Gather information about AI regulation globally",
+    "approach": "1. Found 2 existing entries on 'AI regulation' — EU basics covered\n2. Gaps identified: EU AI Act specifics, US executive orders, China framework, global standards\n3. Researched each gap with separate findings per jurisdiction\n4. Tagged with regional identifiers: ['EU', 'regulation', 'compliance']",
+    "result": "RESEARCH COMPLETE\nTopics covered: EU AI Act, US AI Policy, China AI Governance, Global Standards\nFindings saved: 5\nKey insights:\n• EU AI Act is most comprehensive: risk-tiered, binding, effective 2025 with 2-year grace period\n• US approach: voluntary NIST framework + sector-specific rules (FDA, FTC); executive orders non-binding\n• China focuses on algorithm transparency and content moderation rather than broad risk assessment"
+  }
+]

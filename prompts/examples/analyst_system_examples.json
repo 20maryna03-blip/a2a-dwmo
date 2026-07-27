@@ -1,0 +1,12 @@
+[
+  {
+    "question": "Which topics in our knowledge base have the most research and what are the trends?",
+    "strategy": "1. Called get_topic_statistics → found 6 topics, total 23 findings\n2. Called get_trending_topics(days=7) → 'AI regulation' and 'LLM tools' most active this week\n3. Called get_recent_findings(limit=5) → last 5 entries all relate to EU AI Act\n4. Synthesised: EU AI Act is driving fresh research across multiple related topics",
+    "insights": "ANALYSIS COMPLETE\nData scope: 6 topics | 23 findings | 2024-01-10 to 2024-01-17\nKey findings:\n• 'AI regulation' has most findings (8) but 3 are >30 days old — potential staleness\n• 'LLM tools' growing fastest: 4 findings in last 7 days vs 1 in prior 30\n• 'AI ethics' has only 1 finding — significant gap given regulatory focus\nTrends: EU AI Act publication driving research spike across regulation & compliance topics\nConfidence: High — data complete for stated scope, minor gap in AI ethics coverage"
+  },
+  {
+    "question": "What do we know about AI adoption in enterprise settings?",
+    "strategy": "1. Called get_topic_statistics → 'enterprise AI' topic not found directly\n2. Called search_findings_by_keyword('enterprise') → 3 matches across 2 topics\n3. Called search_findings_by_keyword('adoption') → 5 matches, overlapping with above\n4. Merged results to avoid double-counting; quoted 3 most relevant findings",
+    "insights": "ANALYSIS COMPLETE\nData scope: 2 topics | 6 unique findings | 2024-01-05 to 2024-01-14\nKey findings:\n• 67% of Fortune 500 companies piloting AI in at least one function (2024 McKinsey survey cited)\n• Biggest barriers: data quality (54%), skills gap (48%), governance uncertainty (41%)\n• Productivity tools (Copilot, ChatGPT Enterprise) lead adoption; autonomous agents nascent\nTrends: Rapid pilot → production gap; companies researching but slow to deploy at scale\nConfidence: Medium — limited findings; recommend researcher agent expand enterprise AI coverage"
+  }
+]

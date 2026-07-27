@@ -1,0 +1,68 @@
+# ─── Secrets & local config ───────────────────────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ─── Runtime data (generated at startup, not part of the codebase) ────────────
+# ChromaDB vector database files
+data/vector_db/
+
+# SQLite knowledge-base (populated at runtime)
+data/*.db
+data/*.sqlite
+**/*.db
+**/*.sqlite3
+
+# Logs and PID files written by start_all.sh / stop_all.sh
+.logs/
+.pids/
+*.log
+
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Distribution / packaging
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# ─── Testing & coverage ───────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# ─── IDEs & editors ───────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ─── Jupyter ──────────────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+
+# ─── Ollama model weights (large binary files) ────────────────────────────────
+*.gguf
+*.bin
+models/
+
+# ─── Keep directory stubs ─────────────────────────────────────────────────────
+# (data/.gitkeep is committed so the data/ folder exists on clone)
+!data/.gitkeep
