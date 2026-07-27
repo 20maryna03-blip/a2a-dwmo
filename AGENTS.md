@@ -52,7 +52,7 @@ python demo_client.py
 
 ### Toolbox MCP — MCP Toolbox binary (genai-toolbox)
 - Toolbox MCP is the real `genai-toolbox` binary from `googleapis/mcp-toolbox`
-- Binary location: `../../images/mlp/bin/toolbox` (or set `TOOLBOX_BIN` in `.env`)
+- Binary location: `bin/toolbox` in the project root (committed via Git LFS); override with `TOOLBOX_BIN` in `.env`
 - Config: `toolbox_mcp/tools.yaml` — multi-document YAML with HTTP sources + tools
 - Sources: `arxiv` (`https://export.arxiv.org/api`) and `openalex` (`https://api.openalex.org`)
 - Tools: `search_papers`, `get_trending_ai_papers`, `search_openalex`

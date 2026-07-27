@@ -4,7 +4,8 @@ A production-style, end-to-end demo of a multi-agent AI research platform built 
 
 - **A2A Protocol** (Google) — inter-agent communication
 - **LangGraph** — ReAct agent orchestration
-- **FastMCP** — three MCP servers (Custom, Toolbox, Vector)
+- **FastMCP** — Custom MCP and Vector MCP servers
+- **genai-toolbox binary** — Toolbox MCP (native HTTP, no custom Python needed)
 - **HuggingFace** — embeddings, multimodal (BLIP vision), open-source LLM (Mistral-7B)
 - **ChromaDB** — local persistent vector database
 - **Public APIs** — arXiv, OpenAlex, Wikipedia (no keys required)
@@ -17,7 +18,7 @@ A production-style, end-to-end demo of a multi-agent AI research platform built 
 ```
 User → Orchestrator Agent (OpenAI GPT, port 8001)
             ├── Researcher Agent (OpenAI or HuggingFace Mistral-7B, port 8002)
-            │     ├── Custom MCP  (port 8004) ── knowledge base + Wikipedia + arXiv + HF multimodal
+            │     ├── Custom MCP  (port 8004) ── knowledge base + Wikipedia + HF multimodal
             │     └── Vector MCP  (port 8006) ── HuggingFace embeddings + ChromaDB semantic search
             └── Analyst Agent   (OpenAI GPT, port 8003)
                   └── Toolbox MCP (port 8005) ── arXiv + OpenAlex live analytics
@@ -30,8 +31,8 @@ User → Orchestrator Agent (OpenAI GPT, port 8001)
 | Orchestrator Agent | 8001 | A2A coordinator — delegates to Researcher and Analyst |
 | Researcher Agent | 8002 | Gathers knowledge via Custom MCP + Vector MCP |
 | Analyst Agent | 8003 | Analytics queries via Toolbox MCP |
-| Custom MCP | 8004 | Knowledge base + Wikipedia + arXiv + HuggingFace tools |
-| Toolbox MCP | 8005 | arXiv + OpenAlex academic analytics (no DB needed) |
+| Custom MCP | 8004 | Knowledge base + Wikipedia + HuggingFace tools |
+| Toolbox MCP | 8005 | arXiv + OpenAlex live search (genai-toolbox binary) |
 | Vector MCP | 8006 | Semantic search (HuggingFace embeddings + ChromaDB) |
 
 ---
@@ -40,7 +41,7 @@ User → Orchestrator Agent (OpenAI GPT, port 8001)
 
 | API | Used by | What it provides |
 |---|---|---|
-| [arXiv](https://export.arxiv.org/api/query) | Toolbox MCP, Custom MCP, Vector MCP | Research paper search + trending topics |
+| [arXiv](https://export.arxiv.org/api/query) | Toolbox MCP, Vector MCP | Research paper search + trending topics |
 | [OpenAlex](https://api.openalex.org) | Toolbox MCP | Scholarly graph — 200M+ works, citation stats |
 | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1) | Custom MCP, Vector MCP | Article summaries, encyclopaedic knowledge |
 
@@ -60,7 +61,7 @@ User → Orchestrator Agent (OpenAI GPT, port 8001)
 
 ## MCP Tool Reference
 
-### Custom MCP (port 8004) — 14 tools in 3 groups
+### Custom MCP (port 8004) — 12 tools in 3 groups
 
 **Group 1 — Local Knowledge Base** (SQLite, no network needed)
 - `save_finding(topic, content, source, tags)` — persist a research finding
@@ -70,11 +71,9 @@ User → Orchestrator Agent (OpenAI GPT, port 8001)
 - `generate_summary_report(topic)` — generate a Markdown report
 - `count_findings(topic)` — count findings (total or per-topic)
 
-**Group 2 — Web Knowledge** (public APIs, no key)
+**Group 2 — Wikipedia** (public API, no key)
 - `search_wikipedia(query, limit)` — search Wikipedia articles
 - `get_wikipedia_summary(title)` — get a Wikipedia article summary
-- `fetch_arxiv_papers(query, max_results)` — search arXiv papers
-- `get_arxiv_paper_details(arxiv_id)` — full details for one paper
 
 **Group 3 — HuggingFace AI** (requires `HF_API_KEY`)
 - `analyze_image(image_url)` — BLIP multimodal image captioning
@@ -82,13 +81,11 @@ User → Orchestrator Agent (OpenAI GPT, port 8001)
 - `classify_text(text, candidate_labels)` — zero-shot classification
 - `generate_text_with_hf(prompt, max_new_tokens)` — Mistral-7B LLM generation
 
-### Toolbox MCP (port 8005) — 5 tools
+### Toolbox MCP (port 8005) — 3 tools (genai-toolbox binary, native HTTP)
 
-- `get_topic_statistics(topic)` — OpenAlex concept stats + arXiv paper count
-- `get_recent_findings(limit, topic)` — latest arXiv papers for a topic
-- `search_findings_by_keyword(keyword)` — cross-source search (arXiv + OpenAlex)
-- `get_trending_topics(days)` — trending arXiv categories in last N days
-- `search_openalex_works(query, max_results)` — OpenAlex scholarly graph search
+- `search_papers(search_query, max_results, sortBy)` — search arXiv papers by keyword; returns Atom XML
+- `get_trending_ai_papers(max_results)` — latest submissions across cs.AI, cs.LG, cs.CL, cs.CV
+- `search_openalex(search, per_page)` — query OpenAlex for citation counts, open-access status, topic classification
 
 ### Vector MCP (port 8006) — 5 tools
 
