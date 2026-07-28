@@ -24,7 +24,7 @@ from collections.abc import AsyncIterable
 from typing import Any
 
 import httpx
-from langchain_core.messages import AIMessage
+from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
 from langgraph.prebuilt import create_react_agent
@@ -191,6 +191,31 @@ class OrchestratorAgent:
 
         return [researcher_tool, analyst_tool]
 
+    def _make_prompt(self):
+        """Return a dynamic prompt callable.
+
+        On the first agent turn (before any tool results exist in the
+        conversation) an extra reminder is appended to the system message so
+        that small models (e.g. Llama-3.1-8B) reliably call tools instead of
+        answering directly from training knowledge.
+        """
+        sys_text = self._system_prompt
+
+        def prompt(state: dict) -> list:
+            messages = state.get("messages", [])
+            has_tool_result = any(isinstance(m, ToolMessage) for m in messages)
+            if has_tool_result:
+                content = sys_text
+            else:
+                content = (
+                    sys_text
+                    + "\n\n**ACTION REQUIRED**: Call `researcher` (and/or `analyst`) "
+                    "NOW. Do NOT write a final answer yet."
+                )
+            return [SystemMessage(content=content)] + list(messages)
+
+        return prompt
+
     async def stream(
         self,
         query: str,
@@ -202,9 +227,9 @@ class OrchestratorAgent:
         graph = create_react_agent(
             self._llm,
             tools,
-            prompt=self._system_prompt,
+            prompt=self._make_prompt(),
         )
-        run_cfg = {"recursion_limit": 6}
+        run_cfg = {"recursion_limit": 10}
 
         final_answer = ""
 
